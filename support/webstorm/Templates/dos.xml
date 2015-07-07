@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templateSet group="dos">
+  <template name="$m" value="$scope$.$method(&quot;$functionName$&quot;, function($args$) {&#10;    $END$&#10;});" description="adds a new DOS method" toReformat="true" toShortenFQNames="true">
+    <variable name="scope" expression="jsArrayVariable()" defaultValue="&quot;Public&quot;" alwaysStopAt="true" />
+    <variable name="functionName" expression="jsMethodName()" defaultValue="" alwaysStopAt="true" />
+    <variable name="args" expression="jsSuggestVariableName()" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="JAVA_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="$f" value="$scope$.$field(&quot;$fieldName$&quot;);$END$" description="adds a new DOS field" toReformat="true" toShortenFQNames="true">
+    <variable name="scope" expression="jsArrayVariable()" defaultValue="&quot;Private&quot;" alwaysStopAt="true" />
+    <variable name="fieldName" expression="jsSuggestVariableName()" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="JAVA_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="$g" value="$scope$.$getter(&quot;$getterName$&quot;, function() {&#10;    return $END$;&#10;});" description="adds a new DOS getter" toReformat="true" toShortenFQNames="true">
+    <variable name="scope" expression="jsArrayVariable()" defaultValue="&quot;Public&quot;" alwaysStopAt="true" />
+    <variable name="getterName" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="JAVA_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="$s" value="$scope$.$setter(&quot;$setterName$&quot;, function($arg$) {&#10;    $scope2$.$setterName$ = $arg$;&#10;});" description="adds a new DOS setter" toReformat="true" toShortenFQNames="true">
+    <variable name="scope" expression="jsArrayVariable()" defaultValue="&quot;Public&quot;" alwaysStopAt="true" />
+    <variable name="setterName" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="arg" expression="" defaultValue="&quot;v&quot;" alwaysStopAt="true" />
+    <variable name="scope2" expression="" defaultValue="&quot;Private&quot;" alwaysStopAt="true" />
+    <context>
+      <option name="JAVA_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="$cl" value="dos.$class($namespace$, &quot;$className$&quot;, {&#10;    extends: $extends$,&#10;    static: function(This, Super, Public, Protected, Private) {&#10;    },&#10;    $: function(This, Super, Static, Public, Protected, Private) {&#10;        Public.$init(function(Defaults) {&#10;        }, function(Params) {&#10;        });&#10;        &#10;        Public.$dispose(function() {&#10;        });&#10;        &#10;        $END$&#10;    }&#10;});" description="adds a new DOS class" toReformat="true" toShortenFQNames="true">
+    <variable name="namespace" expression="jsSuggestVariableName()" defaultValue="" alwaysStopAt="true" />
+    <variable name="className" expression="jsQualifiedClassName()" defaultValue="" alwaysStopAt="true" />
+    <variable name="extends" expression="jsQualifiedClassName()" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="JAVA_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="$co" value="$scope$.$const(&quot;$constName$&quot;, { value: &quot;$val$&quot; });$END$" description="adds a new DOS constant" toReformat="true" toShortenFQNames="true">
+    <variable name="scope" expression="jsArrayVariable()" defaultValue="&quot;Public&quot;" alwaysStopAt="true" />
+    <variable name="constName" expression="" defaultValue="&quot;UPPER_CASE&quot;" alwaysStopAt="true" />
+    <variable name="val" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="JAVA_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="$i" value="Public.$init(function(Defaults) {&#10;    }, function(Params) {&#10;        $END$&#10;    });" description="adds a new DOS constructor" toReformat="true" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="$st" value="static: function(This, Super, Public, Protected, Private) {&#10;    $END$&#10;},   " description="adds a new DOS static part" toReformat="true" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="$b" value="$: function(This, Super, Static, Public, Protected, Private) {&#10;    Public.$init(function(Defaults) {&#10;    }, function(Params) {&#10;    });&#10;    &#10;    Public.$dispose(function() {&#10;    });&#10;    &#10;    $END$&#10;}" description="adds a new DOS class body" toReformat="true" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_SCRIPT" value="true" />
+    </context>
+  </template>
+</templateSet>
+

@@ -1,0 +1,56 @@
+{
+    "name": "dos",
+    "version": "1.0.0",
+    "description": "An OO-Framework for JavaScript",
+    "author": "xymatic GmbH <oss@xymatic.com>",
+    "contributors": [{
+        "name": "Frederik Maucksch",
+        "email": "f@xymatic.com"
+    }, {
+        "name": "Matthias Wolff",
+        "email": "m@xymatic.com"
+    }, {
+        "name": "Maximilian Haupt",
+        "email": "q@xymatic.com"
+    }],
+    "license": "MIT",
+    "keywords": [
+        "class",
+        "inheritance",
+        "interfaces",
+        "allocator",
+        "method",
+        "java",
+        "c++",
+        "protected",
+        "object orientation",
+        "oop",
+        "software design",
+        "software architecture",
+        "rtti",
+        "delight"
+    ],
+    "main": "index.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/xymatic/dos"
+    },
+    "bugs": {
+        "url": "https://github.com/dos/issues"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "beefy": "^2.1.5",
+        "browserify": "^10.2.4",
+        "coverify": "^1.3.3",
+        "smokestack": "^3.3.0",
+        "tap-spec": "^4.0.2",
+        "tape": "^4.0.0"
+    },
+    "scripts": {
+        "test": "browserify ./test/index.js | smokestack | tap-spec",
+        "testNode": "tape ./test/index.js | tap-spec",
+        "coverage": "mkdir -p coverage && browserify -t coverify ./test/index.js | node | coverify -o - | grep \"# coverage:\"",
+        "start": "beefy examples/example.js"
+    }
+}

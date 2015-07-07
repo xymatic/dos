@@ -1,0 +1,8 @@
+*.swp
+*.swn
+*.swo
+coverage
+node_modules
+.project
+.settings
+*.idea
