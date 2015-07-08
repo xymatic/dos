@@ -42,7 +42,7 @@
     "devDependencies": {
         "beefy": "^2.1.5",
         "browserify": "^10.2.4",
-        "coverify": "^1.3.3",
+        "istanbul": "^0.3.17",
         "smokestack": "^3.3.0",
         "tap-spec": "^4.0.2",
         "tape": "^4.0.0"
@@ -50,7 +50,7 @@
     "scripts": {
         "test": "browserify ./test/index.js | smokestack | tap-spec",
         "testNode": "tape ./test/index.js | tap-spec",
-        "coverage": "mkdir -p coverage && browserify -t coverify ./test/index.js | node | coverify -o - | grep \"# coverage:\"",
+        "coverage": "mkdir -p coverage && istanbul cover test/index.js",
         "start": "beefy examples/example.js"
     }
 }
