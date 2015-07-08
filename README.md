@@ -60,7 +60,7 @@ dos.$class(ns, "Class", { /* ... */ });
 
 ### Abstract Classes
 
-Classes that cannot be instanciated using new -- they can contain interface methods.
+Classes that cannot be instantiated using new -- they can contain interface methods.
 
 ```javascript
 dos.$abstract(ns, "AbstractClass", { /* ... */ });
@@ -212,7 +212,7 @@ dos.$class(ns, "Class", {
 
 ### Static
 
-Most notably you define nested classes in the static part of your class definition. You can also define constants, and even create a constant of the same type as the class that you are currently defining.
+Most notably you define nested classes in the static part of your class definition. You can also define constants and even create a constant of the same type as the class that you are currently defining.
 
 ```javascript
 var ns = {};
@@ -255,7 +255,7 @@ dos.$interface(ns, "Interface", {
 
 ### Allocators
 
-Custom allocators allow you to control how objects are managed between init and disposed. The default should work well for most cases, but if you, for example want to get some allocation pattern info for debugging purposes, you can subclass an Allocator.
+Custom allocators allow you to control how objects are managed between init and dispose. The default should work well for most cases, but if you for example want to get some allocation pattern info for debugging purposes, you can subclass an Allocator.
 
 ```javascript
 var ns = {};
@@ -288,7 +288,7 @@ new ns.SomeCustomAllocatorClass(); // uses CustomAllocator
 
 ## RTTI
 
-The dos has a rich set of runtime type information features. Please not that they work on instances of as well as classes.
+The dos has a rich set of run-time type information features. Please note that they work on instances of as well as classes.
 
 ```javascript
 var ns = {};
@@ -322,7 +322,7 @@ ns.subns.Class.classHierarchy; // outputs array: [ ns.subns.Class.class, SomeBas
 
 The dos works with named parameters. The init method (or constructor) of dos classes has a magic Params object which helps you validate the parameters given to the class at construction time. 
 
-Here are some examples, but there are more things you can do with it, and also extend on the validator pattern to write your own parameter validation.
+Here are some examples, but there are more things you can do with it like extend on the validator pattern to write your own parameter validation.
 
 ```javascript
 var ns = {};
@@ -353,4 +353,4 @@ npm run coverage
 ```
 
 # Credits
-(c) 2012-2015 xymatic GmbH. MIT License
+(c) 2012-2015 xymatic GmbH. MIT License. See LICENSE file for more information.
