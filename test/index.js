@@ -16,6 +16,18 @@ test("should define core functions", function(t) {
     t.equal(typeof dos.$deinit, "function", "defines $deinit");
     t.equal(typeof dos.ClassDefException, "function", "defines ClassDefException");
     t.equal(typeof dos.ClassInstanceException, "function", "defines ClassInstanceException");
+    t.throws(function() {
+        throw new dos.ClassDefException();
+    }, Error, "should have working empty ClassDefException");
+    t.throws(function() {
+        throw new dos.ClassDefException("test", "test");
+    }, Error, "should have working parameterized ClassDefException");
+    t.throws(function() {
+        throw new dos.ClassInstanceException();
+    }, Error, "should have working empty ClassInstanceException");
+    t.throws(function() {
+        throw new dos.ClassInstanceException("test", "test");
+    }, Error, "should have working parameterized ClassInstanceException");
     t.end();
 });
 
@@ -44,6 +56,11 @@ test("should have class factory function param validation", function(t) {
     t.throws(function() {
         dos.__dos_Class("#");
     }, Error, "should not accept a string consisting only of \"#\"");
+    t.throws(function() {
+        dos.__dos_Class("name.of.Class", {
+            someStrangeParam: 23
+        });
+    }, Error, "should not accept invalid params in param object");
     t.end();
 });
 
@@ -105,6 +122,13 @@ test("should allow simple class definitions", function(t) {
             Public.$method("compareTo", function() {});
         }
     });
+
+    t.throws(function() {
+        var nsInvalidModule = {};
+        dos.$class(nsInvalidModule, "x.1.$$.#.test.InvalidModule", {
+            $: function(This, Super, Static, Public, Protected, Private) {}
+        });
+    }, Error, "should not allow invalid module names");
 
     var noop = new CompareInterfaceTestImplement();
 
@@ -256,6 +280,21 @@ test("should allow simple class definitions", function(t) {
     var y = new ImplementGetterAndSetterInterface();
     t.true(y.instanceof(ImplementGetterAndSetterInterface), "should have working instanceof");
     t.true(y.implements(GetterAndSetterInterface), "should have working implements");
+
+    t.throws(function() {
+        var ns = {};
+        dos.$class(ns, "A", {
+            static: "foo"
+        });
+    }, Error, "should not accept \"static\" that is not a function");
+
+    t.throws(function() {
+        var ns = {};
+        dos.$class(ns, "A$1-", {
+            static: "foo"
+        });
+    }, Error, "should not accept invalid class names");
+
     t.end();
 });
 
@@ -501,14 +540,27 @@ test("should support static", function(t) {
             Protected.$field("val");
             Public.$init(function() {
                 Protected.val = 42;
-                //console.log(Protected);
             });
             Protected.$method("staticMethod", function(out) {
                 return out || 42;
             });
             Protected.$method("getValue", function() {
-                //console.log(Protected);
                 return Protected.val;
+            });
+            Public.$method("staticReflect", function() {
+                Private.$reflect(function(Public, Protected, Private) {
+                    Public.$method("reflectedMethod", function() {});
+                    Public.$class("ReflectedClass", {
+                        static: function(This, Super, Public, Protected, Private) {
+                            Protected.$field("val", {
+                                getter: Public
+                            });
+                            Public.$init(function() {
+                                Protected.val = 42;
+                            });
+                        }
+                    });
+                });
             });
         },
         $: function(This, Super, Static, Public, Protected, Private) {
@@ -521,6 +573,11 @@ test("should support static", function(t) {
         }
     });
 
+    t.equal(nsSomeStaticBase.SomeStaticBase.reflectedMethod, undefined, "reflected method should be undefined");
+    nsSomeStaticBase.SomeStaticBase.staticReflect();
+    t.equal(typeof nsSomeStaticBase.SomeStaticBase.reflectedMethod, "function", "reflected method should be a function");
+    t.equal(nsSomeStaticBase.SomeStaticBase.ReflectedClass.val, 42, "should have reflected class");
+
     var nsSomeStaticDerived = {};
     var SomeStaticDerived = dos.$class(nsSomeStaticDerived, "SomeStaticDerived", {
         extends: SomeStaticBase,
@@ -528,7 +585,6 @@ test("should support static", function(t) {
             Public.$init(function() {
                 Protected.val = 20;
                 Protected.bleh = 10;
-                //console.log(Protected);
             });
             Protected.$method("staticMethod", function() {
                 return Super.staticMethod(23);
@@ -938,6 +994,57 @@ test("should support default interfaces and reflection", function(t) {
     t.end();
 });
 
+test("should correctly handle rawParams in hierarchy", function(t) {
+    var ns = {};
+    dos.$class(ns, "A", {
+        useRawParams: true,
+        $: function(This, Super, Static, Public, Protected, Private) {
+            Public.$init(function(Params) {
+                var x = Params.someCoolParam;
+                t.equal(x, 1000);
+            });
+        }
+    });
+    dos.$class(ns, "B", {
+        useRawParams: false,
+        extends: ns.A,
+        $: function(This, Super, Static, Public, Protected, Private) {
+            Public.$init(function(Params) {
+                var x = Params.getType("someCoolParam", dos.Types.Number);
+                t.equal(x, 1000);
+            });
+        }
+    });
+    dos.$class(ns, "C", {
+        useRawParams: false,
+        $: function(This, Super, Static, Public, Protected, Private) {
+            Public.$init(function(Params) {
+                var x = Params.getType("someCoolParam", dos.Types.Number);
+                t.equal(x, 1000);
+            });
+        }
+    });
+    dos.$class(ns, "D", {
+        useRawParams: true,
+        extends: ns.A,
+        $: function(This, Super, Static, Public, Protected, Private) {
+            Public.$init(function(Params) {
+                var x = Params.someCoolParam;
+                t.equal(x, 1000);
+            });
+        }
+    });
+    t.doesNotThrow(function() {
+        var noop = new ns.B({
+            someCoolParam: 1000
+        });
+        noop = new ns.D({
+            someCoolParam: 1000
+        });
+    }, "should be able to traverse heterogenous param hierarchy");
+    t.end();
+});
+
 test("should correctly dispose in case of Protected/Public fields", function(t) {
     var nsSomePayload = {};
     var SomePayload = dos.$class(nsSomePayload, "SomePayload", {
@@ -993,6 +1100,167 @@ test("should correctly dispose in case of Protected/Public fields", function(t) 
     t.end();
 });
 
+test("should have working allocator functionality", function(t) {
+    var ns = {};
+
+    t.doesNotThrow(function() {
+        dos.$allocator(ns, "CustomAllocator", {
+            extends: dos.PoolAllocator,
+            $: function(This, Super, Static, Public, Protected, Private) {
+                Private.$field("poolSize");
+                Public.$init(function(Params) {
+                    Private.poolSize = Params.getType("poolSize", dos.Types.Number);
+                });
+                Public.$method("alloc", function(ClassCtorProxy, Public) {
+                    // custom allocation code goes here
+                    return Super.alloc(ClassCtorProxy, Public);
+                });
+                Public.$method("dealloc", function(obj) {
+                    Super.dealloc(obj);
+                    // custom deallocation code goes here
+                });
+            }
+        });
+    }, "should allow definition of derived allocators");
+
+    t.doesNotThrow(function() {
+        dos.$class(ns, "SomeCustomAllocatorClass", {
+            allocator: ns.CustomAllocator,
+            allocatorParams: {
+                poolSize: 42
+            },
+            $: function(This, Super, Static, Public, Protected, Private) {
+                /* ... */
+            }
+        });
+        var noop = new ns.SomeCustomAllocatorClass(); // uses CustomAllocator
+    }, "should allo class with custom allocator and allocator params");
+
+    t.throws(function() {
+        dos.$class(ns, "SomeInvalidCustomAllocatorClass", {
+            allocator: undefined,
+            $: function(This, Super, Static, Public, Protected, Private) {
+                /* ... */
+            }
+        });
+    }, Error, "should not allow undefined as allocator param");
+
+    t.throws(function() {
+        dos.$class(ns, "SomeInvalidCustomAllocatorClass", {
+            allocator: "foo",
+            $: function(This, Super, Static, Public, Protected, Private) {
+                /* ... */
+            }
+        });
+    }, Error, "should not allow string as allocator param");
+
+    t.throws(function() {
+        dos.$class(ns, "SomeInvalidCustomAllocatorClass", {
+            allocator: 9000,
+            $: function(This, Super, Static, Public, Protected, Private) {
+                /* ... */
+            }
+        });
+    }, Error, "should not allow other types as allocator param");
+
+    t.throws(function() {
+        dos.$abstract(ns, "SomeInvalidCustomAllocatorClass", {
+            allocator: ns.CustomAllocator,
+            $: function(This, Super, Static, Public, Protected, Private) {
+                /* ... */
+            }
+        });
+    }, Error, "should not allow allocators in abstract classes");
+    t.end();
+});
+
+test("should allow all supported field types in Params", function(t) {
+    var ns = {};
+    t.doesNotThrow(function() {
+        dos.$class(ns, "SomeClassType", {
+            $: function(This, Super, Static, Public, Protected, Private) {
+                Public.$init(function() {});
+            }
+        });
+        dos.$class(ns, "ManyTypes", {
+            $: function(This, Super, Static, Public, Protected, Private) {
+                Private.$field("classType");
+                Private.$field("Int8Array");
+                Private.$field("Uint8Array");
+                Private.$field("Uint8ClampedArray");
+                Private.$field("Int16Array");
+                Private.$field("Uint16Array");
+                Private.$field("Int32Array");
+                Private.$field("Uint32Array");
+                Private.$field("Float32Array");
+                Private.$field("Float64Array");
+                Private.$field("RegExp");
+                Private.$field("Date");
+                Private.$field("Error");
+                Private.$field("Array");
+
+                Private.$field("Object");
+                Private.$field("Number");
+                Private.$field("Undefined");
+                Private.$field("String");
+                Private.$field("Boolean", {
+                    isConst: true
+                });
+
+                Public.$init(function(Defaults) {
+                        Defaults.classType = new ns.SomeClassType();
+                        Defaults.Int8Array = new Int8Array();
+                        Defaults.Uint8Array = new Uint8Array();
+                        Defaults.Uint8ClampedArray = new Uint8ClampedArray();
+                        Defaults.Int16Array = new Int16Array();
+                        Defaults.Uint16Array = new Uint16Array();
+                        Defaults.Int32Array = new Int32Array();
+                        Defaults.Uint32Array = new Uint32Array();
+                        Defaults.Float32Array = new Float32Array();
+                        Defaults.Float64Array = new Float64Array();
+                        Defaults.RegExp = /./;
+                        Defaults.Date = new Date();
+                        Defaults.Error = new Error();
+                        Defaults.Array = [];
+                        Defaults.Object = {};
+                        Defaults.Number = 1;
+                        Defaults.Undefined = undefined;
+                        Defaults.String = "string";
+                        Defaults.Boolean = false;
+                    },
+                    function(Params) {
+                        Private.classType = Params.getType("classType", ns.SomeClassType);
+                        Private.Int8Array = Params.getType("Int8Array", dos.Types.Int8Array);
+                        Private.Uint8Array = Params.getType("Uint8Array", dos.Types.Uint8Array);
+                        Private.Uint8ClampedArray = Params.getType("Uint8ClampedArray", dos.Types.Uint8ClampedArray);
+                        Private.Int16Array = Params.getType("Int16Array", dos.Types.Int16Array);
+                        Private.Uint16Array = Params.getType("Uint16Array", dos.Types.Uint16Array);
+                        Private.Int32Array = Params.getType("Int32Array", dos.Types.Int32Array);
+                        Private.Uint32Array = Params.getType("Uint32Array", dos.Types.Uint32Array);
+                        Private.Float32Array = Params.getType("Float32Array", dos.Types.Float32Array);
+                        Private.Float64Array = Params.getType("Float64Array", dos.Types.Float64Array);
+                        Private.RegExp = Params.getType("RegExp", dos.Types.RegExp);
+                        Private.Date = Params.getType("Date", dos.Types.Date);
+                        Private.Error = Params.getType("Error", dos.Types.Error);
+                        Private.Array = Params.getType("Array", dos.Types.Array);
+                        Private.Object = Params.getType("Object", dos.Types.Object);
+                        Private.Number = Params.getType("Number", dos.Types.Number);
+                        Private.Undefined = Params.getType("Undefined", dos.Types.Undefined);
+                        Private.String = Params.getType("String", dos.Types.String);
+                        Private.Boolean = Params.getType("Boolean", dos.Types.Boolean);
+                        Private.Boolean = Params.getType("Boolean", dos.Types.Boolean);
+                    });
+            }
+        });
+    }, "should allow all common types in class definition");
+
+    t.doesNotThrow(function() {
+        var noop = new ns.ManyTypes();
+    }, "should accept all common types in params and fields");
+
+    t.end();
+});
+
 test("should warn about duplicate fields", function(t) {
     t.throws(function() {
         var nsDuplicateFields = {};
@@ -1009,7 +1277,7 @@ test("should warn about duplicate fields", function(t) {
 });
 
 
-test("should disallow autoDispose on raw fields", function(t) {
+test("should have working autoDispose", function(t) {
     t.throws(function() {
         var nsAutoDisposeRawFieldTrue = {};
         var AutoDisposeRawFieldTrue = dos.$class(nsAutoDisposeRawFieldTrue, "AutoDisposeRawFieldTrue", {
@@ -1025,6 +1293,34 @@ test("should disallow autoDispose on raw fields", function(t) {
         });
         var x = new AutoDisposeRawFieldTrue();
     }, Error, "should disallow autoDispose on raw fields");
+
+    t.doesNotThrow(function() {
+        var ns = {};
+        dos.$class(ns, "SomeClass", {
+            $: function(This, Super, Static, Public, Protected, Private) {
+                Public.$init(function() {});
+            }
+        });
+        dos.$class(ns, "AutoDisposeOnClass", {
+            $: function(This, Super, Static, Public, Protected, Private) {
+                Public.$field("test", {
+                    autoDispose: true,
+                    callbacks: {
+                        onTypeChange: function() {},
+                        onValueChange: function() {}
+                    }
+                });
+                Public.$init(function(Params) {
+                    Public.test = new ns.SomeClass();
+                });
+            }
+        });
+        var x = new ns.AutoDisposeOnClass();
+        x.test = new ns.SomeClass();
+        x.dispose();
+    }, "should have working autoDispose on dos object in case of dispose and replace");
+
+
     t.end();
 });
 
@@ -1050,13 +1346,26 @@ test("should have a working class graph", function(t) {
         ]
     });
 
+    dos.$class(ns, "Z", {
+        extends: ns.Y
+    });
+
     ns.A.getAllImplementingClasses().map(function(elem) {
-        t.true(elem === ns.X || elem === ns.Y, "should correctly enumerate all implementing classes of base interface");
+        t.true(elem === ns.X || elem === ns.Y || elem === ns.Z, "should correctly enumerate all implementing classes of base interface");
     });
 
     ns.D.getAllImplementingClasses().map(function(elem) {
         t.false(elem === ns.X, "should correctly enumerate all implementing classes of derived interface");
     });
+
+    ns.X.getAllDerivedClasses().map(function(elem) {
+        t.true(elem === ns.Y || elem === ns.Z, "should correctly enumerate all derived classes of base class");
+    });
+
+    ns.X.classHierarchy.map(function(elem) {
+        t.true(elem === ns.X || elem === ns.Y || elem === ns.Z, "should correctly enumerate class hierarchy");
+    });
+
     t.end();
 });
 
@@ -1085,8 +1394,8 @@ test("should not overwrite internal functions in static", function(t) {
 
 test("should have a simple class name getter", function(t) {
     var nsSimpleClassName = {};
-    var SimpleClassName = dos.$abstract(nsSimpleClassName, "blah.SimpleClassName", {});
-    t.equal(nsSimpleClassName.blah.SimpleClassName.simpleClassName, "SimpleClassName", "should have simple class name getter");
+    var SimpleClassName = dos.$abstract(nsSimpleClassName, "blah.blah.SimpleClassName", {});
+    t.equal(nsSimpleClassName.blah.blah.SimpleClassName.simpleClassName, "SimpleClassName", "should have simple class name getter");
     t.end();
 });
 
@@ -1124,6 +1433,56 @@ test("should support fields with typesafe polymorphic assignments", function(t) 
         x.nonPolymorphicField = y;
         x.nonPolymorphicField = z;
     }, Error, "should support fields with typesafe polymorphic assignments");
+    t.end();
+});
+
+test("should have working serialization interface", function(t) {
+    t.doesNotThrow(function() {
+        var ns = {};
+        dos.$class(ns, "FieldAccessBase", {
+            $: function(This, Super, Static, Public, Protected, Private) {
+                Public.$field("publicFieldBase");
+                Protected.$field("protectedFieldBase");
+                Private.$field("privateFieldBase");
+                Public.$init(function(Params) {
+                    Public.publicFieldBase = 1;
+                    Protected.protectedFieldBase = 2;
+                    Private.privateFieldBase = new Float32Array();
+                });
+            }
+        });
+        dos.$class(ns, "SerializationHolder", {
+            $: function(This, Super, Static, Public, Protected, Private) {
+                Public.$init(function(Params) {});
+            }
+        });
+        dos.$class(ns, "FieldAccessDerived", {
+            extends: ns.FieldAccessBase,
+            $: function(This, Super, Static, Public, Protected, Private) {
+                Public.$field("publicFieldDerived");
+                Protected.$field("protectedFieldDerived", {
+                    raw: true
+                });
+                Private.$field("privateFieldDerived");
+                Private.$field("privateFieldDerivedDate");
+                Private.$field("privateFieldDerivedRegExp");
+                Public.$init(function(Params) {
+                    Public.publicFieldDerived = 1;
+                    Protected.protectedFieldDerived = new ns.SerializationHolder();
+                    Private.privateFieldDerived = "someValue";
+                    Private.privateFieldDerivedDate = new Date();
+                    Private.privateFieldDerivedRegExp = new RegExp();
+                });
+            }
+        });
+        dos.$class(ns, "ObjectOutput", {
+            $: function(This, Super, Static, Public, Protected, Private) {}
+        });
+        var x = new ns.FieldAccessDerived();
+        t.equal(x.__dos_getFields(undefined), undefined, "should only allow dos object as param");
+        var fields = x.__dos_getFields(new ns.ObjectOutput());
+        x.__dos_initSerializedFields(fields);
+    }, "should emit and consume field descs");
     t.end();
 });
 
