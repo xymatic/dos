@@ -756,6 +756,8 @@ Object.defineProperty(dos, "__dos_Class", {
                         delete Private.$root;
                         delete Private.$allocator;
                         delete Private.$static;
+
+                        mergeInto(nonStaticClassCtorProxy, Public);
                     }
                 });
             };
